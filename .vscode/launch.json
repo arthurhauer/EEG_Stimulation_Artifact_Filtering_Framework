@@ -8,7 +8,7 @@
             "name": "Python: Arquivo Atual",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "c:\\Users\\Arthur Hauer\\OneDrive\\Documentos\\Projetos\\Desenvolvimento\\Mestrado\\EEG_SAF_Framework\\EEG_Stimulation_Artifact_Filtering_Framework\\main.py",
             "console": "integratedTerminal"
         }
     ]

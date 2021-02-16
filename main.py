@@ -1,6 +1,6 @@
 from opensignalsreader import OpenSignalsReader
 import matplotlib.pyplot as plt
-from Utils.artifact_detection import ArtifactDetection
+from Utils.artifact_detection import *
 
 acq = OpenSignalsReader('sample.txt')
 
@@ -8,7 +8,7 @@ readings=[[]]
 readings[0]=acq.raw(1)
 
 detection=ArtifactDetection(readings)
-locations=detection.peak_detection(100,0.15)
+locations=detection.peak_detection(100,0.5,15)
 # locations=detection.threshold(520,15)
 
 plt.figure(1)
