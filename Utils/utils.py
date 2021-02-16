@@ -52,5 +52,5 @@ def sliding_median_absolute_deviation(samples: list, window_size: int) -> list:
             result[t] = stats.median_absolute_deviation(
                 __get_window(window_size, samples, t))
         except:
-            result[t] = 0
+            result[t] = 100
     return result

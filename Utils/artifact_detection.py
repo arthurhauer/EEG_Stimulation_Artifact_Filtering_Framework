@@ -27,7 +27,6 @@ class ArtifactDetection:
         """
         'eeg': 2D array, where the first index points to the channel, and the second index points to the timestamp.
         """
-        print('Init Artifact Detection Class')
         self.eeg = eeg
         self.n_samples=len(eeg[0])
 
@@ -88,5 +87,27 @@ class ArtifactDetection:
             artifact_locations[t]= 0 if abs(first_order_diferences[t])<sensitivity_multiplier*median_absolute_deviation[t] else 1
 
         return artifact_locations
+
+#--------------------------------------------------------------------------------------------------#
+
+    def threshold(self,threshold:float,smoothing:int)->list:
+        # Check if loaded eeg is of valid format
+        self.__check_loaded_eeg()
+
+        # Initialize artifact location markings
+        artifact_locations=[0]*self.n_samples
+        smooth=[0]*self.n_samples
+
+        # Set artifact location marking to 1 if first order difference of sample is greater than a scaled median absolute deviation for the same sample
+        for t in range(self.n_samples):
+            artifact_locations[t]= 0 if abs(self.eeg[0][t])<threshold else 1
+
+            if(t>smoothing and smoothing>0):
+                avg=sum(artifact_locations[t-smoothing:t])/smoothing
+                smooth[t] = 0 if avg<0.5 else 1
+            else:
+                smooth[t]=artifact_locations[t]
+
+        return smooth
 
 #--------------------------------------------------------------------------------------------------#
