@@ -1,5 +1,6 @@
 from Utils.artifact_detection import ArtifactDetection
 import copy
+
 class ArtifactFiltering:
 #--------------------------------------------------------------------------------------------------#
 #------------------------------------------- DOC---------------------------------------------------#
@@ -20,14 +21,24 @@ class ArtifactFiltering:
     stimulation_markings=[]
     n_samples=0
 
+#--------------------------------------------------------------------------------------------------#
+#-------------------------------------- Constructor------------------------------------------------#
+#--------------------------------------------------------------------------------------------------#
+
     def __init__(self, eeg:list,stimulation_markings:list=[]):
         print('Init Artifact Filtering Class')
         self.eeg = eeg
         self.n_samples=len(eeg[0])
         self.stimulation_markings
 
+#--------------------------------------------------------------------------------------------------#
+#----------------------------------- Private methods-----------------------------------------------#
+#--------------------------------------------------------------------------------------------------#
+
     def __get_eeg_copy(self)->list:
         return copy.deepcopy(self.eeg)
+
+#--------------------------------------------------------------------------------------------------#
 
     def __check_loaded_eeg(self):
         error=False
@@ -38,6 +49,8 @@ class ArtifactFiltering:
         if(error):
             raise Exception('EEG not properly loaded.')
 
+#--------------------------------------------------------------------------------------------------#
+
     def __check_loaded_markings(self):
         error=False
         try:
@@ -46,6 +59,8 @@ class ArtifactFiltering:
             error=True
         if(error):
             raise Exception('Stimulation markings not properly loaded.')
+
+#--------------------------------------------------------------------------------------------------#
 
     def __blank_artifacts(self)->(list,list):
 
@@ -85,13 +100,20 @@ class ArtifactFiltering:
         else:
             return indexes,lengths
 
+#--------------------------------------------------------------------------------------------------#
+#----------------------------------- Public methods------------------------------------------------#
+#--------------------------------------------------------------------------------------------------#
+
     def load_eeg(self, eeg:list):
         self.eeg=eeg
         self.n_samples=len(eeg[0])
 
+#--------------------------------------------------------------------------------------------------#
+
     def load_stimulation_markings(self,stimulation_markings:list):
         self.stimulation_markings=stimulation_markings
 
+#--------------------------------------------------------------------------------------------------#
 
     def generate_stimulation_markings(self,method:str='peak_detection',**kwargs):
         try:
@@ -117,19 +139,29 @@ class ArtifactFiltering:
         else:
             raise Exception("Detection method invalid!")
 
+#--------------------------------------------------------------------------------------------------#
+
     def get_eeg(self)->list:
         self.__check_loaded_eeg()
         return self.eeg
+
+#--------------------------------------------------------------------------------------------------#
 
     def get_stimulation_markings(self)->list:
         self.__check_loaded_markings()
         return self.stimulation_markings
 
+#--------------------------------------------------------------------------------------------------#
+
     def template_subtraction(self):
         raise Exception("Not Implemented")
 
+#--------------------------------------------------------------------------------------------------#
+
     def reference_signal_subtraction(self):
         raise Exception("Not Implemented")
+
+#--------------------------------------------------------------------------------------------------#
 
     def blanking_interpolation(self)->list:
         """
@@ -165,14 +197,24 @@ class ArtifactFiltering:
 
         return filtered_signal
 
+#--------------------------------------------------------------------------------------------------#
+
     def blanking_gaussian_distribution(self):
         raise Exception("Not Implemented")
+
+#--------------------------------------------------------------------------------------------------#
 
     def common_average_reference(self):
         raise Exception("Not Implemented")
 
+#--------------------------------------------------------------------------------------------------#
+
     def linear_regression_reference(self):
         raise Exception("Not Implemented")
 
+#--------------------------------------------------------------------------------------------------#
+
     def sys_id_wiener_filtering(self):
         raise Exception("Not Implemented")
+
+#--------------------------------------------------------------------------------------------------#
