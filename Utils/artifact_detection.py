@@ -19,16 +19,18 @@ class ArtifactDetection:
 
     eeg = [[]]
     n_samples=0
+    cluster_size=0
 
 #--------------------------------------------------------------------------------------------------#
 #-------------------------------------- Constructor------------------------------------------------#
 #--------------------------------------------------------------------------------------------------#
-    def __init__(self, eeg):
+    def __init__(self, eeg:list,cluster_size:int=0):
         """
         'eeg': 2D array, where the first index points to the channel, and the second index points to the timestamp.
         """
         self.eeg = eeg
         self.n_samples=len(eeg[0])
+        self.cluster_size=cluster_size
 
 #--------------------------------------------------------------------------------------------------#
 #----------------------------------- Private methods-----------------------------------------------#
@@ -44,6 +46,40 @@ class ArtifactDetection:
             raise Exception('EEG not properly loaded.')
 
 #--------------------------------------------------------------------------------------------------#
+
+    def __cluster(self,artifact_markings:list)->list:
+        if self.cluster_size>0:
+            clustered_markings=[0]*self.n_samples
+            last_detection=None
+            for t in range(self.cluster_size+1,self.n_samples):
+                if artifact_markings[t]==1:
+                    clustered_markings[t]=1
+                    if not 1 in artifact_markings[t-self.cluster_size:t]:
+                        clustered_markings[t-1]=1
+                        clustered_markings[t-2]=1
+                    if last_detection!=None:
+                        since_last_detection=t-last_detection
+                        if since_last_detection<=self.cluster_size:
+                            clustered_markings[last_detection:t]=[1]*since_last_detection
+                    last_detection=t
+            return clustered_markings
+        else:
+            return artifact_markings
+            
+#--------------------------------------------------------------------------------------------------#
+
+    def __fast_cluster(self,last_detection:int,current_index:int,location_markings:list)->list:
+        clustered_markings=location_markings
+        if not 1 in location_markings[current_index-self.cluster_size:current_index]:
+            clustered_markings[current_index-1]=1
+            clustered_markings[current_index-2]=1
+        if last_detection!=None:
+            since_last_detection=current_index-last_detection
+            if since_last_detection<=self.cluster_size:
+                clustered_markings[last_detection:current_index]=[1]*since_last_detection
+        return clustered_markings
+
+#--------------------------------------------------------------------------------------------------#
 #----------------------------------- Public methods------------------------------------------------#
 #--------------------------------------------------------------------------------------------------#
 
@@ -56,7 +92,12 @@ class ArtifactDetection:
 
 #--------------------------------------------------------------------------------------------------#
 
-    def peak_detection(self,window_size:int, sensitivity:int, cluster_size:int) -> list:
+    def set_cluster_size(self,cluster_size:int=0):
+        self.cluster_size=cluster_size
+
+#--------------------------------------------------------------------------------------------------#
+
+    def peak_detection(self,window_size:int, sensitivity:int) -> list:
         """
         Method based on the artifact detencion algorithm described on
         { 10.1109/IEMBS.2011.6091809: U. Hoffmann, W. Cho, A. Ramos-Murguialday, and T. Keller,
@@ -85,39 +126,28 @@ class ArtifactDetection:
         last_detection=None
         for t in range(self.n_samples):
             # Set artifact location marking to 1 if first order difference of sample is greater than a scaled median absolute deviation for the same sample
-            # Cluster detections
             artifact_locations[t]= 0 if abs(first_order_diferences[t])<sensitivity_multiplier*median_absolute_deviation[t] else 1
+            
+            # Cluster detections
             if(artifact_locations[t]==1):
-                if(cluster_size>0 and t>cluster_size):
-                    if(numpy.amax(artifact_locations[t-cluster_size:t])>0):
-                        artifact_locations[t-1]=1
-                        artifact_locations[t-2]=1
-                    if(last_detection!=None and t-last_detection<=cluster_size):
-                        for i in range(t-last_detection,t):
-                            artifact_locations[i]=1
+                artifact_locations=self.__fast_cluster(last_detection,t,artifact_locations)
                 last_detection=t
         return artifact_locations
 
 #--------------------------------------------------------------------------------------------------#
 
-    def threshold(self,threshold:float,smoothing:int)->list:
+    def threshold(self,threshold:float)->list:
         # Check if loaded eeg is of valid format
         self.__check_loaded_eeg()
 
         # Initialize artifact location markings
         artifact_locations=[0]*self.n_samples
-        smooth=[0]*self.n_samples
-
-        # Set artifact location marking to 1 if first order difference of sample is greater than a scaled median absolute deviation for the same sample
+        last_detection=None
         for t in range(self.n_samples):
             artifact_locations[t]= 0 if abs(self.eeg[0][t])<threshold else 1
-
-            if(t>smoothing and smoothing>0):
-                avg=sum(artifact_locations[t-smoothing:t])/smoothing
-                smooth[t] = 0 if avg<0.5 else 1
-            else:
-                smooth[t]=artifact_locations[t]
-
-        return smooth
+            if(artifact_locations[t]==1):
+                artifact_locations=self.__fast_cluster(last_detection,t,artifact_locations)
+                last_detection=t
+        return artifact_locations
 
 #--------------------------------------------------------------------------------------------------#

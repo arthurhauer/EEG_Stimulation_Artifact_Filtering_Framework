@@ -6,16 +6,15 @@ acq = OpenSignalsReader('sample.txt')
 
 readings=[[]]
 readings[0]=acq.raw(1)
-
-detection=ArtifactDetection(readings)
-locations=detection.peak_detection(100,0.5,15)
-# locations=detection.threshold(520,15)
-
 plt.figure(1)
 plt.subplot(211)
 plt.plot(readings[0])
 
+detection=ArtifactDetection(readings,200)
+
+locations_peak=detection.peak_detection(25,3)
 plt.figure(1)
 plt.subplot(212)
-plt.plot(locations)
+plt.plot(locations_peak)
+
 plt.show()
