@@ -9,8 +9,8 @@ class ArtifactDetection:
     """
     Class developed for detection of stimulus artifiact in EEG signals.
     Version: 1.0.1
-    Authored by: Arthur Hauer
-    Last modified: 16/02/2021
+    Last modified by: Arthur Hauer
+    Last modification date: 16/02/2021
     """
 
 #--------------------------------------------------------------------------------------------------#
