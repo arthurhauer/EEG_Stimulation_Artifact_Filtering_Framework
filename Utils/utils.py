@@ -28,14 +28,14 @@ class Utils:
         """
         Compute the differences between the current sample and the next one and sum through all channels.
         """
-        n_samples = len(eeg[0])
+        n_samples = len(eeg)
         computed_diffs = [0]*n_samples
         for sample_index in range(n_samples):
             diff = 0
-            for channel_index in range(len(eeg)):
+            for channel_index in range(len(eeg[0])):
                 try:
-                    diff += eeg[channel_index][sample_index+1] - \
-                        eeg[channel_index][sample_index]
+                    diff += eeg[sample_index+1][channel_index] - \
+                        eeg[sample_index][channel_index]
                 except:
                     diff = 0
                     break

@@ -28,7 +28,7 @@ class ArtifactFiltering:
     def __init__(self, eeg:list,stimulation_markings:list=[]):
         print('Init Artifact Filtering Class')
         self.eeg = eeg
-        self.n_samples=len(eeg[0])
+        self.n_samples=len(eeg)
         self.stimulation_markings
 
 #--------------------------------------------------------------------------------------------------#
@@ -43,7 +43,7 @@ class ArtifactFiltering:
     def __check_loaded_eeg(self):
         error=False
         try:
-            error=len(self.eeg[0])<1
+            error=len(self.eeg)<1
         except:
             error=True
         if(error):
@@ -106,7 +106,7 @@ class ArtifactFiltering:
 
     def load_eeg(self, eeg:list):
         self.eeg=eeg
-        self.n_samples=len(eeg[0])
+        self.n_samples=len(eeg)
 
 #--------------------------------------------------------------------------------------------------#
 
@@ -189,11 +189,11 @@ class ArtifactFiltering:
         filtered_signal=self.__get_eeg_copy()
 
         for i in range(len(indexes)):
-            ts=indexes[i]-1
+            ts=indexes[i]-1 if indexes[i]>0 else 0
             te=indexes[i]+lengths[i]
             for t in range(ts,te):
-                for channel in range(len(self.eeg)):
-                    filtered_signal[channel][t]=((self.eeg[channel][te]*(t-ts))/(te-ts))+((self.eeg[channel][ts]*(te-t))/(te-ts))
+                for channel in range(len(self.eeg[0])):
+                    filtered_signal[t][channel]=((self.eeg[te][channel]*(t-ts))/(te-ts))+((self.eeg[ts][channel]*(te-t))/(te-ts))
 
         return filtered_signal
 

@@ -31,7 +31,7 @@ class ArtifactDetection:
         'eeg': 2D array, where the first index points to the channel, and the second index points to the timestamp.
         """
         self.eeg = eeg
-        self.n_samples=len(eeg[0])
+        self.n_samples=len(eeg)
         self.cluster_size=cluster_size
 
 #--------------------------------------------------------------------------------------------------#
@@ -41,7 +41,7 @@ class ArtifactDetection:
     def __check_loaded_eeg(self):
         error=False
         try:
-            error=len(self.eeg[0])<1
+            error=len(self.eeg)<1
         except:
             error=True
         if(error):
@@ -90,7 +90,7 @@ class ArtifactDetection:
         Loads a new EEG reading.
         """
         self.eeg = eeg
-        self.n_samples=len(eeg[0])
+        self.n_samples=len(eeg)
 
 #--------------------------------------------------------------------------------------------------#
 
@@ -146,7 +146,7 @@ class ArtifactDetection:
         artifact_locations=[0]*self.n_samples
         last_detection=None
         for t in range(self.n_samples):
-            artifact_locations[t]= 0 if abs(self.eeg[0][t])<threshold else 1
+            artifact_locations[t]= 0 if abs(self.eeg[t][0])<threshold else 1
             if(artifact_locations[t]==1):
                 artifact_locations=self.__fast_cluster(last_detection,t,artifact_locations)
                 last_detection=t
