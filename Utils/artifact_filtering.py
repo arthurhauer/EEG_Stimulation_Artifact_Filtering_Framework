@@ -1,4 +1,5 @@
 from Utils.artifact_detection import ArtifactDetection
+import numpy as np
 import copy
 
 class ArtifactFiltering:
@@ -8,9 +9,9 @@ class ArtifactFiltering:
 
     """
     Class developed for filtering of stimulus artifiact in EEG signals.
-    Version: 1.0.0
+    Version: 1.0.1
     Last modified by: Arthur Hauer
-    Last modification date: 18/02/2021
+    Last modification date: 25/02/2021
     """
 
 #--------------------------------------------------------------------------------------------------#
@@ -40,25 +41,31 @@ class ArtifactFiltering:
 
 #--------------------------------------------------------------------------------------------------#
 
-    def __check_loaded_eeg(self):
+    def __check_signal(self,signal:list):
         error=False
         try:
-            error=len(self.eeg)<1
+            error=len(signal)<1
         except:
             error=True
         if(error):
-            raise Exception('EEG not properly loaded.')
+            raise Exception('Signal not properly loaded.')
+
+#--------------------------------------------------------------------------------------------------#
+
+    def __check_loaded_eeg(self):
+        try:
+            self.__check_eeg(self.eeg)
+        except:
+            raise Exception('EEG not properly loaded')
 
 #--------------------------------------------------------------------------------------------------#
 
     def __check_loaded_markings(self):
-        error=False
         try:
-            error=len(self.stimulation_markings)<1
+            self.__check_eeg(self.stimulation_markings)
         except:
-            error=True
-        if(error):
             raise Exception('Stimulation markings not properly loaded.')
+            
 
 #--------------------------------------------------------------------------------------------------#
 
@@ -163,6 +170,35 @@ class ArtifactFiltering:
 
 #--------------------------------------------------------------------------------------------------#
 
+    def blanking(self)->list:
+        """
+        Method based on the eeg blanking algorithm described on
+        { J. S. Lewis, Z. Barani, A. S. Magana, and F. Kargar,
+         “Signal processing methods for reducing artifacts in microelectrode brain recordings causedby functional electrical stimulation,”
+          pp. 0–31, 2019 }.
+        This method assumes the entire corrupted signal is unusable, and should be excluded
+         'eeg' parameter must be loaded before use.
+        """
+        # Check if loaded eeg is of valid format
+        self.__check_loaded_eeg()
+
+        # Check if loaded stimulation markings is valid
+        try:
+            self.__check_loaded_markings()
+        # If markings are invalid, generate markings with the default method
+        except:
+            self.generate_stimulation_markings('peak_detection', window_size=25,sensitivity=3)
+        
+        (indexes,lengths)=self.__blank_artifacts()
+
+        filtered_signal=self.__get_eeg_copy()
+
+        for i in range(len(indexes)):
+            filtered_signal[i:i+lengths[i]]=[0]*lengths[i]
+        return filtered_signal
+
+#--------------------------------------------------------------------------------------------------#
+
     def blanking_interpolation(self)->list:
         """
         Method based on the eeg stimulation artifact blanking and interpolation algorithm described on
@@ -172,6 +208,7 @@ class ArtifactFiltering:
          Proceedings of the Annual International Conference of the
          IEEE Engineering in Medicine and Biology Society,
          EMBS, pp. 7159–7162, 2011, Section III, Subsection B }.
+         This method assumes the entire corrupted signal is unusable, and should be replaced by a linear interpolation between the sample the precedes the artifact and the sample comes right after it.
          'eeg' parameter must be loaded before use.
         """
         # Check if loaded eeg is of valid format
@@ -199,22 +236,104 @@ class ArtifactFiltering:
 
 #--------------------------------------------------------------------------------------------------#
 
-    def blanking_gaussian_distribution(self):
-        raise Exception("Not Implemented")
+    def blanking_gaussian_distribution(self,artifact_free_data:list,training_vector_samples:int):
+        """
+        Method based on the eeg stimulation artifact blanking and interpolation algorithm described on
+        { 10.1109/IEMBS.2011.6091809: U. Hoffmann, W. Cho, A. Ramos-Murguialday, and T. Keller,
+         “Detection and removal of stimulation artifacts in electroencephalogram
+         recordings”,
+         Proceedings of the Annual International Conference of the
+         IEEE Engineering in Medicine and Biology Society,
+         EMBS, pp. 7159–7162, 2011, Section III, Subsection C }.
+         This method assumes the entire corrupted signal is unusable, and should be replaced by the most probable signal based on training.
+         'eeg' parameter must be loaded before use.
+        """
+        # Check if loaded eeg is of valid format
+        self.__check_loaded_eeg()
+
+        # Check if loaded training data is of valid format
+        try:
+            self.__check_signal(artifact_free_data)
+        except:
+            raise Exception("Artifact free training data not properly loaded.")
+
+        # Check if loaded stimulation markings is valid
+        try:
+            self.__check_loaded_markings()
+        # If markings are invalid, generate markings with the default method
+        except:
+            self.generate_stimulation_markings('peak_detection', window_size=25,sensitivity=3)
+        
+        # Get artifacts indexes and duration in samples
+        (indexes,lengths)=self.__blank_artifacts()
+
+        # Copy training data to avoid messing with the original object
+        training_data=copy.deepcopy(artifact_free_data)
+
+        # Copy eeg data to avoid messing with the original object
+        filtered_signal=self.__get_eeg_copy()
+
+        # Normalize by subtracting the mean in each channel, and set the variance of each channel to 1
+
+        #TODO Implementar normalização
+
+        # Form column vectors of dimension {training_vector_samples}*{n_channels} X 1 from the normalized multichannel segments
+
+        z = np.array([[]])
+
+        # Number of training vectors
+
+        N = len(z)
+
+        # Sample mean
+
+        m = 1/N*sum(z)
+
+        # Covariance matrix
+        summed=0
+        for zi in z:
+            summed+=np.array(zi-m).transpose()*(zi-m)
+        E=1/N*summed
+
+        #TODO Falta conhecimento para implementar a parte seguinte!
+        
+        return filtered_signal
 
 #--------------------------------------------------------------------------------------------------#
 
     def common_average_reference(self):
-        raise Exception("Not Implemented")
+        """
+        Method based on the eeg common average reference algorithm described on
+        { J. S. Lewis, Z. Barani, A. S. Magana, and F. Kargar,
+         “Signal processing methods for reducing artifacts in microelectrode brain recordings causedby functional electrical stimulation,”
+          pp. 0–31, 2019 }.
+        This method assumes the artifact is similar across all channels, and can be predicted by a fixed average.
+         'eeg' parameter must be loaded before use.
+        """
 
 #--------------------------------------------------------------------------------------------------#
 
     def linear_regression_reference(self):
-        raise Exception("Not Implemented")
+        """
+        Method based on the eeg linear regression reference algorithm described on
+        { J. S. Lewis, Z. Barani, A. S. Magana, and F. Kargar,
+         “Signal processing methods for reducing artifacts in microelectrode brain recordings causedby functional electrical stimulation,”
+          pp. 0–31, 2019 }.
+        This method assumes the artifact is similar across some channels, and can be predicted by a weighted sum of other channels.
+         'eeg' parameter must be loaded before use.
+        """
 
 #--------------------------------------------------------------------------------------------------#
 
     def sys_id_wiener_filtering(self):
-        raise Exception("Not Implemented")
+         """
+        Method based on the eeg linear regression reference algorithm described on
+        { M.  Sadeghi  Najafabadi,  L.  Chen,  K.  Dutta,  A.  Norris,  B.  Feng,  J.  W.Schnupp, N. Rosskothen-Kuhl, H. L. Read, and M. A. Escabí,
+         “OptimalMultichannel  Artifact  Prediction  and  Removal  for  Neural  Stimulationand  Brain  Machine  Interfaces”,
+         Frontiers  in  Neuroscience,
+         vol.  14,  no.July, pp. 1–19, 2020. }.
+        This method assumes the artifact has a linear relation with the stimulation current, and can be predicted through system identification.
+         'eeg' parameter must be loaded before use.
+        """
 
 #--------------------------------------------------------------------------------------------------#
