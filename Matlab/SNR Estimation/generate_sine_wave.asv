@@ -1,4 +1,0 @@
-function signal = generate_sine_wave(frequency,duration,Fs)
-
-end
-
