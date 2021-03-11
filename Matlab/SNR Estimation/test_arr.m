@@ -10,11 +10,11 @@ cleanSignal1=awgn(basisSignal,10,'measured'); % Add white gaussian noise to act 
 cleanSignal2=awgn(basisSignal,10,'measured'); %
 
 [estimatedCleanSNR,f]=snr_estimation(cleanSignal1,cleanSignal2,Fs); % Estimate the 'clean signal' SNR
-figure(1),subplot(3,1,1),plot(f,estimatedCleanSNR);
+figure(1),subplot(2,1,1),plot(f,estimatedCleanSNR),title('Clean Signal SNR');
 
 signal1=generate_repeatable_awgn(cleanSignal1,stimulation_artifact_SNR);% Add stimulation artifact noise
 signal2=generate_repeatable_awgn(cleanSignal2,stimulation_artifact_SNR);
 
 [estimatedSNR,f]=snr_estimation(signal1,signal2,Fs); % Estimate 'dirty' signal's SNR
 
-figure(1),subplot(3,1,2),plot(f,estimatedSNR);
+figure(1),subplot(2,1,2),plot(f,estimatedSNR),title('Artifact Signal SNR');;
