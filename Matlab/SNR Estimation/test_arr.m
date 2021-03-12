@@ -11,18 +11,18 @@ maxFrequency=50;
 minFrequency=1;
 maxAmplitude=5;
 minAmplitude=0.1;
-maxSNR=1;
-minSNR=0.1;
+maxSNR=100;
+minSNR=-100;
 
 estimatedSNR=zeros(iterations,1);
-realSNR=zeros(iterations,1);
+matlabEstimatedSNR=zeros(iterations,1);
 fsArray=zeros(iterations,1);
 durationArray=zeros(iterations,1);
 frequencyArray=zeros(iterations,1);
 amplitudeArray=zeros(iterations,1);
-snrArray=zeros(iterations,1);
+realSNR=zeros(iterations,1);
 tic;
-for i=1:iterations
+parfor i=1:iterations
     Fs=gen_rand_in_range(minFs,maxFs);
     duration=gen_rand_in_range(minDuration,maxDuration);
     frequency=gen_rand_in_range(minFrequency,maxFrequency);
@@ -32,29 +32,35 @@ for i=1:iterations
     durationArray(i)=duration;
     frequencyArray(i)=frequency;
     amplitudeArray(i)=amplitude;
-    snrArray(i)=stimulation_artifact_SNR;
-    [realSNR(i),estimatedSNR(i)] = test_snr_estimation(Fs,duration,frequency,amplitude,stimulation_artifact_SNR);
+    realSNR(i)=stimulation_artifact_SNR;
+    [matlabEstimatedSNR(i),estimatedSNR(i)] = test_snr_estimation(Fs,duration,frequency,amplitude,stimulation_artifact_SNR);
 end
 elapsed=toc;
 
 clear i Fs duration frequency amplitude stimulation_artifact_SNR;
 
-figure(1), plot(realSNR,'--'),xlabel('Iteração'),ylabel('dB');
-hold on;
-plot(estimatedSNR);
-hold off;
-legend('SNR Real','SNR Estimado')
-
 error=realSNR-estimatedSNR;
 absError=abs(error);
 
-figure(2), subplot(3,1,1),plot(absError),title('Erro'),ylabel('dB');
-figure(2), subplot(3,1,3),histogram(error,100),title('Histograma do erro'),xlabel('dB'),ylabel('Frequência')
-figure(2), subplot(3,1,2),plot(absError),title('Erro absoluto'),ylabel('dB');
+normError=normalize(error);
+normRealSNR=normalize(realSNR);
+normEstimatedSNR=normalize(estimatedSNR);
+normMatlabEstimatedSNR=normalize(matlabEstimatedSNR);
 
-figure(3), subplot(3,1,1),scatter(snrArray,error),title('SNR (parâmetro) vs Erro'),xlabel('SNR (parâmetro)'),ylabel('Erro');
-figure(3), subplot(3,1,2),scatter(snrArray,realSNR),title('SNR (parâmetro) vs SNR Real'),xlabel('SNR (parâmetro)'),ylabel('SNR Real');
-figure(3), subplot(3,1,3),scatter(snrArray,error),title('SNR (parâmetro) vs SNR Estimado'),xlabel('SNR (parâmetro)'),ylabel('SNR Estimado');
+% figure(1), plot(realSNR,'--'),xlabel('Iteração'),ylabel('dB');
+% hold on;
+% plot(estimatedSNR);
+% hold off;
+% legend('SNR Real','SNR Estimado')
+% 
+% 
+% figure(2), subplot(3,1,1),plot(absError),title('Erro'),ylabel('dB');
+% figure(2), subplot(3,1,2),plot(absError),title('Erro absoluto'),ylabel('dB');
+
+figure(3), subplot(2,2,1),scatter(normRealSNR,normError),title('SNR Real vs Erro'),xlabel('SNR Real'),ylabel('Erro');
+figure(3), subplot(2,2,2),scatter(normRealSNR,normEstimatedSNR),title('SNR Real vs SNR Estimado'),xlabel('SNR Real'),ylabel('SNR Estimado');
+figure(3), subplot(2,2,3),scatter(normRealSNR,normMatlabEstimatedSNR),title('SNR Real vs SNR Estimado (Matlab)'),xlabel('SNR Estimado'),ylabel('Erro');
+figure(3), subplot(2,2,4),histogram(error,100),title('Histograma do erro'),xlabel('dB'),ylabel('Frequência')
 
 disp(strcat('Erro absoluto médio: ',sprintf('%.4f',mean(absError)),'dB'));
 disp(strcat('Tempo total: ',sprintf('%.4f',elapsed),'segundos'));

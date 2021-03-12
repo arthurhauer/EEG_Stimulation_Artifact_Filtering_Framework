@@ -1,4 +1,4 @@
-function [ realMeanSNR,estimatedMeanSNR ] = test_snr_estimation( Fs,duration,frequency,amplitude,stimulation_artifact_SNR,showPlots )
+function [ matlabEstimatedSNR,estimatedMeanSNR ] = test_snr_estimation( Fs,duration,frequency,amplitude,stimulation_artifact_SNR,showPlots )
 if nargin>5
         shouldPlot=showPlots;
     else if nargin==5
@@ -23,7 +23,7 @@ noise=signal1-cleanSignal1;
 
 meanCleanSNR = 10*log10(mean(estimatedCleanSNR));
 meanSNR = 10*log10(mean(estimatedSNR));
-realMeanSNR = snr(signal1,noise);
+matlabEstimatedSNR = snr(signal1);
 estimatedMeanSNR=abs(meanCleanSNR)-abs(meanSNR);
 
 if shouldPlot
