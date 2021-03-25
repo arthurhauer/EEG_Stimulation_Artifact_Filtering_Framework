@@ -1,4 +1,5 @@
 from scipy import stats
+import numpy as np
 
 class Utils:
 
@@ -56,3 +57,16 @@ class Utils:
             except:
                 result[t] = 100
         return result
+
+
+    @staticmethod
+    def power_list(input:list)->list:
+        return [x**2 for x in input]
+
+    @staticmethod
+    def subtract_lists(input1:list,input2:list)->list:
+        return [x1-x2 for (x1,x2) in zip(input1,input2)]
+
+    @staticmethod
+    def sum_list(input:list):
+        return sum(input)
