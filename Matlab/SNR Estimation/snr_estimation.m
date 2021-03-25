@@ -10,7 +10,8 @@ function [snr,f] = snr_estimation(y,yl,Fs,windowValue)
     end
     [csd,f1]=cpsd(y,yl,window,[],[],Fs);
     [psd,f2]=pwelch(y,window,[],[],Fs);
-    snr=(psd-abs(csd))./abs(csd);
+    tCsd=abs(csd);
+    snr=(psd-tCsd)./tCsd;
     f=f1;
 end
 

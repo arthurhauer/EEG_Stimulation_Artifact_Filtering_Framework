@@ -1,0 +1,37 @@
+function [ realSNR,meanSNR ] = test_snr_estimation( Fs,duration,frequency,amplitude,stimulation_artifact_SNR,showPlots )
+if nargin>5
+        shouldPlot=showPlots;
+    else if nargin==5
+        shouldPlot=false;
+        else
+            error('Número inválido de parâmetros');
+            return
+        end
+end
+
+acquisitions=2;    
+
+[basisSignal,t]=generate_sine_wave(frequency,duration,amplitude,Fs); % Generate sinewave
+cleanSignal=zeros(10,size(t,2));
+dirtySignal=zeros(10,size(t,2));
+for i=1:acquisitions
+   cleanSignal(i,:)= awgn(basisSignal,10,'measured'); % Add white gaussian noise to act as commonly found noise in measurements
+   dirtySignal(i,:)=generate_repeatable_awgn(cleanSignal(i,:),stimulation_artifact_SNR);% Add stimulation artifact noise
+end
+noise=dirtySignal(1,:)-cleanSignal(1,:);
+totalComparisons=((acquisitions-1+1)*(acquisitions-1))/2;
+estimatedSNRArray=zeros(totalComparisons,1);
+for i=1:acquisitions-1
+    for j=i:acquisitions
+          estimatedSNRArray(i)=10*log10(sum(cleanSignal(j,:).^2)/sum((dirtySignal(i,:)-cleanSignal(j,:)).^2)));
+%         [cleanEstimatedSNR,f]=snr_estimation(cleanSignal(i,:),cleanSignal(j,:),Fs); % Estimate 'dirty' signal's SNR
+%         [estimatedSNR,f]=snr_estimation(dirtySignal(i,:),dirtySignal(j,:),Fs); % Estimate 'dirty' signal's SNR
+%         estimatedSNRArray(i)= abs(10*log10(nanmean(cleanEstimatedSNR)))-abs(10*log10(nanmean(estimatedSNR)));
+    end
+end
+
+meanSNR = mean(estimatedSNRArray);
+realSNR = snr(dirtySignal(1,:),noise);
+
+end
+
